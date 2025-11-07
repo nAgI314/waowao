@@ -1,9 +1,9 @@
+"use client";
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 
 export default function Callback() {
-  const navigate = useNavigate();
-
+  const router = useRouter();
   useEffect(() => {
   const urlParams = new URLSearchParams(window.location.search);
   const code = urlParams.get("code");
@@ -12,7 +12,7 @@ export default function Callback() {
   if (error) {
     console.error("❌ GitHub Auth Error:", error);
     alert("GitHub認証エラー: " + error);
-    navigate("/");
+    router.push("/");
     return;
   }
 
@@ -60,13 +60,13 @@ export default function Callback() {
       .catch((err) => {
         console.error("❌ GitHub Auth Error:", err);
         alert("認証に失敗しました:\n" + err.message);
-        navigate("/");
+        router.push("/");
       });
   } else {
     console.warn("⚠️ codeがURLに含まれていません");
-    navigate("/");
+    router.push("/");
   }
-}, [navigate]);
+}, [router]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen text-white bg-gradient-to-b from-blue-400 to-blue-600">
