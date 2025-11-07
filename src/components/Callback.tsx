@@ -20,7 +20,7 @@ export default function Callback() {
     console.log("📝 Code取得:", code);
     
     // APIを呼び出してトークンを取得
-    fetch(`https://wao-silk.vercel.app/api/git-auth?code=${encodeURIComponent(code)}`)
+    fetch(`https://waowao-three.vercel.app/api/git-auth?code=${encodeURIComponent(code)}`)
 
       .then((res) => {
         console.log("📡 API Response Status:", res.status);
