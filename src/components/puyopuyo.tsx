@@ -19,7 +19,7 @@ const COLORS = [
 // GitHub設定（環境変数から取得することを推奨）
 const GITHUB_CONFIG = {
   owner: 'nAgI314', // GitHubユーザー名
-  repo: 'wao', // リポジトリ名
+  repo: 'waowao', // リポジトリ名
 };
 
 export default function PuyoPuyo() {
@@ -178,6 +178,26 @@ export default function PuyoPuyo() {
 
   return null;
 };
+
+// GitHubユーザー情報を取得
+const fetchGitHubUser = async (token: string) => {
+  try {
+    const res = await fetch("https://api.github.com/user", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/vnd.github.v3+json",
+      },
+    });
+    if (!res.ok) throw new Error("ユーザー情報取得失敗");
+    const data = await res.json();
+    console.log("👤 GitHubユーザー:", data.login);
+    setUserName(data.login);
+    localStorage.setItem("github_user", data.login);
+  } catch (err) {
+    console.error("❌ ユーザー取得エラー:", err);
+  }
+};
+
   // GitHub APIを使ってPRを作成
   const createPullRequest = async (audioBlob: Blob) => {
   let token = await getGitHubToken();
@@ -189,6 +209,8 @@ export default function PuyoPuyo() {
     }
     return;
   }
+  
+  await fetchGitHubUser(token);
 
   setUploadStatus('アップロード中...');
 
