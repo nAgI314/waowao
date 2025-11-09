@@ -44,7 +44,7 @@ export default function PuyoPuyo() {
   const [uploadStatus, setUploadStatus] = useState<string>('');
   const [showRecordModal, setShowRecordModal] = useState<boolean>(true);
   const [prUrl, setPrUrl] = useState<string>('');
-  
+
   const [userName, setUserName] = useState("");
   const [availableAudios, setAvailableAudios] = useState<string[]>([]); // ← 追加：アップロード済み音声一覧
 
@@ -131,173 +131,173 @@ export default function PuyoPuyo() {
 
   // --- GitHubログインヘルパー ---
   const loginWithGitHub = () => {
-  const clientId = process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID;
-  if (!clientId) {
-    alert("❌ NEXT_PUBLIC_CLIENT_ID が設定されていません");
-    return;
-  }
-  
-  // リダイレクトURIは /callback に統一
-  const redirectUri = `${window.location.origin}/callback`;
-  const scope = "repo,user";
-  const url = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}`;
-  
-  console.log("🔗 GitHub認証URL:", url);
-  window.location.href = url;
-};
+    const clientId = process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID;
+    if (!clientId) {
+      alert("❌ NEXT_PUBLIC_CLIENT_ID が設定されていません");
+      return;
+    }
+
+    // リダイレクトURIは /callback に統一
+    const redirectUri = `${window.location.origin}/callback`;
+    const scope = "repo,user";
+    const url = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}`;
+
+    console.log("🔗 GitHub認証URL:", url);
+    window.location.href = url;
+  };
 
   // --- アクセストークンを取得する関数 ---
- const getGitHubToken = async () => {
-  // 1. ローカルストレージから取得
-  let token = localStorage.getItem("github_token");
-  if (token) {
-    console.log("✅ キャッシュからトークン取得");
-    await fetchGitHubUser(token);
-    return token;
-  }
-
-  // 2. URLからcodeを取得（主にローカルテスト用）
-  const code = new URLSearchParams(window.location.search).get("code");
-  if (code) {
-    try {
-      const res = await fetch(`/api/git-auth?code=${encodeURIComponent(code)}`);
-      const data = await res.json();
-      
-      if (data.access_token) {
-        localStorage.setItem("github_token", data.access_token);
-        window.history.replaceState({}, document.title, "/");
-        console.log("✅ コードからトークン取得");
-        return data.access_token;
-      } else {
-        throw new Error(data.error || "トークン取得失敗");
-      }
-    } catch (err) {
-      console.error("❌ トークン取得エラー:", err);
-      return null;
+  const getGitHubToken = async () => {
+    // 1. ローカルストレージから取得
+    let token = localStorage.getItem("github_token");
+    if (token) {
+      console.log("✅ キャッシュからトークン取得");
+      await fetchGitHubUser(token);
+      return token;
     }
-  }
 
-  return null;
-};
+    // 2. URLからcodeを取得（主にローカルテスト用）
+    const code = new URLSearchParams(window.location.search).get("code");
+    if (code) {
+      try {
+        const res = await fetch(`/api/git-auth?code=${encodeURIComponent(code)}`);
+        const data = await res.json();
 
-// GitHubユーザー情報を取得
-const fetchGitHubUser = async (token: string) => {
-  try {
-    const res = await fetch("https://api.github.com/user", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/vnd.github.v3+json",
-      },
-    });
-    if (!res.ok) throw new Error("ユーザー情報取得失敗");
-    const data = await res.json();
-    console.log("👤 GitHubユーザー:", data.login);
-    setUserName(data.login);
-    localStorage.setItem("github_user", data.login);
-  } catch (err) {
-    console.error("❌ ユーザー取得エラー:", err);
-  }
-};
+        if (data.access_token) {
+          localStorage.setItem("github_token", data.access_token);
+          window.history.replaceState({}, document.title, "/");
+          console.log("✅ コードからトークン取得");
+          return data.access_token;
+        } else {
+          throw new Error(data.error || "トークン取得失敗");
+        }
+      } catch (err) {
+        console.error("❌ トークン取得エラー:", err);
+        return null;
+      }
+    }
+
+    return null;
+  };
+
+  // GitHubユーザー情報を取得
+  const fetchGitHubUser = async (token: string) => {
+    try {
+      const res = await fetch("https://api.github.com/user", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/vnd.github.v3+json",
+        },
+      });
+      if (!res.ok) throw new Error("ユーザー情報取得失敗");
+      const data = await res.json();
+      console.log("👤 GitHubユーザー:", data.login);
+      setUserName(data.login);
+      localStorage.setItem("github_user", data.login);
+    } catch (err) {
+      console.error("❌ ユーザー取得エラー:", err);
+    }
+  };
 
   // GitHub APIを使ってPRを作成
   const createPullRequest = async (audioBlob: Blob) => {
-  let token = await getGitHubToken();
-  
-  if (!token) {
-    const confirmed = window.confirm("GitHubにログインしてください。ログイン画面に移動しますか？");
-    if (confirmed) {
-      loginWithGitHub();
-    }
-    return;
-  }
+    let token = await getGitHubToken();
 
-  // ✅ ここで確実にユーザー名を取得
-  let user = userName;
-  if (!user) {
-    console.log("🔍 GitHubユーザー名が未設定なので再取得します...");
-    await fetchGitHubUser(token); // state更新
-    const savedUser = localStorage.getItem("github_user");
-    user = savedUser || "unknown";
-    setUserName(user);
-  }
-
-  console.log("👤 現在のGitHubユーザー:", user);
-
-  setUploadStatus('アップロード中...');
-
-  try {
-    const base64Audio = await blobToBase64(audioBlob);
-    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-    const branchName = `audio-upload-${timestamp}`;
-    let fileName = `wao-${timestamp}-${Math.random().toString(36).slice(2, 6)}.webm`;
-
-    // ① mainブランチの最新SHAを取得
-    const refRes = await fetch(
-      `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/git/refs/heads/main`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/vnd.github.v3+json",
-        },
+    if (!token) {
+      const confirmed = window.confirm("GitHubにログインしてください。ログイン画面に移動しますか？");
+      if (confirmed) {
+        loginWithGitHub();
       }
-    );
-    
-    if (!refRes.ok) {
-      throw new Error(`ブランチ取得失敗: ${refRes.status}`);
+      return;
     }
-    
-    const refData = await refRes.json();
-    const baseSha = refData.object.sha;
 
-    // ② 新しいブランチを作成
-    const createBranchRes = await fetch(
-      `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/git/refs`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-          Accept: "application/vnd.github.v3+json",
-        },
-        body: JSON.stringify({
-          ref: `refs/heads/${branchName}`,
-          sha: baseSha,
-        }),
+    // ✅ ここで確実にユーザー名を取得
+    let user = userName;
+    if (!user) {
+      console.log("🔍 GitHubユーザー名が未設定なので再取得します...");
+      await fetchGitHubUser(token); // state更新
+      const savedUser = localStorage.getItem("github_user");
+      user = savedUser || "unknown";
+      setUserName(user);
+    }
+
+    console.log("👤 現在のGitHubユーザー:", user);
+
+    setUploadStatus('アップロード中...');
+
+    try {
+      const base64Audio = await blobToBase64(audioBlob);
+      const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+      const branchName = `audio-upload-${timestamp}`;
+      let fileName = `wao-${timestamp}-${Math.random().toString(36).slice(2, 6)}.webm`;
+
+      // ① mainブランチの最新SHAを取得
+      const refRes = await fetch(
+        `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/git/refs/heads/main`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/vnd.github.v3+json",
+          },
+        }
+      );
+
+      if (!refRes.ok) {
+        throw new Error(`ブランチ取得失敗: ${refRes.status}`);
       }
-    );
 
-    if (!createBranchRes.ok) {
-      throw new Error(`ブランチ作成失敗: ${createBranchRes.status}`);
-    }
+      const refData = await refRes.json();
+      const baseSha = refData.object.sha;
 
-    // ③ 音声ファイルをアップロード
-    const putRes = await fetch(
-      `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/public/audio/${fileName}`,
-      {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-          Accept: "application/vnd.github.v3+json",
-        },
-        body: JSON.stringify({
-          message: `Add wao voice: ${fileName}`,
-          content: base64Audio,
-          branch: branchName,
-        }),
+      // ② 新しいブランチを作成
+      const createBranchRes = await fetch(
+        `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/git/refs`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            Accept: "application/vnd.github.v3+json",
+          },
+          body: JSON.stringify({
+            ref: `refs/heads/${branchName}`,
+            sha: baseSha,
+          }),
+        }
+      );
+
+      if (!createBranchRes.ok) {
+        throw new Error(`ブランチ作成失敗: ${createBranchRes.status}`);
       }
-    );
 
-    const putData = await putRes.json();
-    if (!putRes.ok) {
-      throw new Error(putData.message || "Upload failed");
-    }
+      // ③ 音声ファイルをアップロード
+      const putRes = await fetch(
+        `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/public/audio/${fileName}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            Accept: "application/vnd.github.v3+json",
+          },
+          body: JSON.stringify({
+            message: `Add wao voice: ${fileName}`,
+            content: base64Audio,
+            branch: branchName,
+          }),
+        }
+      );
 
-    setRecordedAudioUrl(`https://raw.githubusercontent.com/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/${branchName}/public/audio/${fileName}`);
-    setUploadStatus('✅ 音声をアップロードしました');
+      const putData = await putRes.json();
+      if (!putRes.ok) {
+        throw new Error(putData.message || "Upload failed");
+      }
 
-    // ④ HTMLプレビューファイルを作成
-    const htmlContent = `<!DOCTYPE html>
+      setRecordedAudioUrl(`https://raw.githubusercontent.com/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/${branchName}/public/audio/${fileName}`);
+      setUploadStatus('✅ 音声をアップロードしました');
+
+      // ④ HTMLプレビューファイルを作成
+      const htmlContent = `<!DOCTYPE html>
 <html>
 <head>
   <title>Audio Preview - ${fileName}</title>
@@ -356,40 +356,40 @@ const fetchGitHubUser = async (token: string) => {
 </body>
 </html>`;
 
-    const base64Html = btoa(unescape(encodeURIComponent(htmlContent)));
+      const base64Html = btoa(unescape(encodeURIComponent(htmlContent)));
 
-    await fetch(
-      `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/public/audio/preview-${timestamp}.html`,
-      {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/vnd.github.v3+json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          message: `Add audio preview: ${fileName}`,
-          content: base64Html,
-          branch: branchName
-        })
-      }
-    );
+      await fetch(
+        `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/public/audio/preview-${timestamp}.html`,
+        {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            message: `Add audio preview: ${fileName}`,
+            content: base64Html,
+            branch: branchName
+          })
+        }
+      );
 
-    // ⑤ Pull Requestを作成
-    const prRes = await fetch(
-      `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/pulls`,
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/vnd.github.v3+json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          title: `🎤 新しいﾜｵ!音声 from ${user}`,
-          head: branchName,
-          base: 'main',
-          body: `## 🎉 ${user}さんの新しいﾜｵ!音声がアップロードされました！
+      // ⑤ Pull Requestを作成
+      const prRes = await fetch(
+        `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/pulls`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            title: `🎤 新しいﾜｵ!音声 from ${user}`,
+            head: branchName,
+            base: 'main',
+            body: `## 🎉 ${user}さんの新しいﾜｵ!音声がアップロードされました！
 
 ### 🔊 プレビュー
 [こちらをクリックして試聴](https://raw.githubusercontent.com/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/${branchName}/public/audio/${fileName})
@@ -401,27 +401,27 @@ const fetchGitHubUser = async (token: string) => {
 
 ---  
 *このPRは自動生成されました*`
-        })
+          })
+        }
+      );
+
+      const prData = await prRes.json();
+
+      if (prData.html_url) {
+        setPrUrl(prData.html_url);
+        setUploadStatus('✅ アップロード完了！PRが作成されました');
+        setTimeout(() => {
+          setShowRecordModal(false);
+        }, 3000);
+      } else {
+        throw new Error(prData.message || 'PR作成に失敗しました');
       }
-    );
 
-    const prData = await prRes.json();
-
-    if (prData.html_url) {
-      setPrUrl(prData.html_url);
-      setUploadStatus('✅ アップロード完了！PRが作成されました');
-      setTimeout(() => {
-        setShowRecordModal(false);
-      }, 3000);
-    } else {
-      throw new Error(prData.message || 'PR作成に失敗しました');
+    } catch (error) {
+      console.error('❌ アップロードエラー:', error);
+      setUploadStatus(`❌ エラー: ${error}`);
     }
-
-  } catch (error) {
-    console.error('❌ アップロードエラー:', error);
-    setUploadStatus(`❌ エラー: ${error}`);
-  }
-};
+  };
 
   const createNewPair = useCallback((): Puyo[] => {
     const color1 = Math.floor(Math.random() * COLORS.length) + 1;
@@ -760,10 +760,16 @@ const fetchGitHubUser = async (token: string) => {
 
               {recordedAudioUrl && (
                 <button
-                  onClick={() => setShowRecordModal(false)}
+                  onClick={() => {
+                    const audio = new Audio(recordedAudioUrl);
+                    audio.volume = volume;
+                    audio.play().catch(() => { });
+                    setShowRecordModal(false);
+                    setUploadStatus('🎮 ゲームを開始しました！');
+                  }}
                   className="px-8 py-3 bg-purple-500 hover:bg-purple-600 text-white font-bold rounded-lg text-lg transition-all transform hover:scale-105"
                 >
-                  録音した音声で開始
+                  アップロードせずに始める
                 </button>
               )}
             </div>
