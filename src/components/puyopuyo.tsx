@@ -386,10 +386,10 @@ const fetchGitHubUser = async (token: string) => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          title: `🎤 新しいﾜｵ!音声 from ${userName}`,
+          title: `🎤 新しいﾜｵ!音声 from ${user}`,
           head: branchName,
           base: 'main',
-          body: `## 🎉 ${userName}さんの新しいﾜｵ!音声がアップロードされました！
+          body: `## 🎉 ${user}さんの新しいﾜｵ!音声がアップロードされました！
 
 ### 🔊 プレビュー
 [こちらをクリックして試聴](https://raw.githubusercontent.com/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/${branchName}/public/audio/${fileName})
