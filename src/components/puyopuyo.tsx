@@ -152,6 +152,7 @@ export default function PuyoPuyo() {
   let token = localStorage.getItem("github_token");
   if (token) {
     console.log("✅ キャッシュからトークン取得");
+    await fetchGitHubUser(token);
     return token;
   }
 
@@ -206,12 +207,12 @@ const fetchGitHubUser = async (token: string) => {
     const confirmed = window.confirm("GitHubにログインしてください。ログイン画面に移動しますか？");
     if (confirmed) {
       loginWithGitHub();
-      await fetchGitHubUser(token);
+      // await fetchGitHubUser(token);
     }
     return;
   }
 
-  await fetchGitHubUser(token);
+  // await fetchGitHubUser(token);
 
   setUploadStatus('アップロード中...');
 
