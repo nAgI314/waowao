@@ -207,12 +207,21 @@ const fetchGitHubUser = async (token: string) => {
     const confirmed = window.confirm("GitHubにログインしてください。ログイン画面に移動しますか？");
     if (confirmed) {
       loginWithGitHub();
-      // await fetchGitHubUser(token);
     }
     return;
   }
 
-  // await fetchGitHubUser(token);
+  // ✅ ここで確実にユーザー名を取得
+  let user = userName;
+  if (!user) {
+    console.log("🔍 GitHubユーザー名が未設定なので再取得します...");
+    await fetchGitHubUser(token); // state更新
+    const savedUser = localStorage.getItem("github_user");
+    user = savedUser || "unknown";
+    setUserName(user);
+  }
+
+  console.log("👤 現在のGitHubユーザー:", user);
 
   setUploadStatus('アップロード中...');
 
