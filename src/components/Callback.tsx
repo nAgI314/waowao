@@ -42,7 +42,6 @@ export default function Callback() {
         if (data.access_token) {
           console.log("✅ GitHub token保存");
           localStorage.setItem("github_token", data.access_token);
-          localStorage.setItem("github_user", data.user.login);
           
           // ホーム画面に戻る
           setTimeout(() => {

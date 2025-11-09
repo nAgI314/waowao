@@ -206,6 +206,7 @@ const fetchGitHubUser = async (token: string) => {
     const confirmed = window.confirm("GitHubにログインしてください。ログイン画面に移動しますか？");
     if (confirmed) {
       loginWithGitHub();
+      await fetchGitHubUser(token);
     }
     return;
   }
