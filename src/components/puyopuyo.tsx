@@ -332,6 +332,10 @@ export default function PuyoPuyo() {
 //   };
 
 const createPullRequest = async (audioBlob: Blob) => {
+  if (!userName.trim()) {
+      setUploadStatus('❌ 名前を入力してください');
+      return;
+    }
     setUploadStatus('アップロード中...');
 
     try {
@@ -350,6 +354,7 @@ const createPullRequest = async (audioBlob: Blob) => {
           fileName,
           base64Audio,
           timestamp,
+          userName,
         }),
       });
 
@@ -647,6 +652,14 @@ const createPullRequest = async (audioBlob: Blob) => {
           <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl">
             <h2 className="text-3xl font-bold text-center mb-4 text-blue-900">ﾜｵ!を録音しよう</h2>
             <div className="flex flex-col gap-4 items-center">
+            <input
+                type="text"
+                placeholder="お名前を入力"
+                value={userName}
+                onChange={(e) => setUserName(e.target.value)}
+                maxLength={20}
+                className="w-full px-4 py-2 border-2 border-blue-400 rounded-lg text-lg text-center focus:outline-none focus:border-blue-600"
+              />
               {!isRecording && !recordedAudioUrl && (
                 <button
                   onClick={startRecording}

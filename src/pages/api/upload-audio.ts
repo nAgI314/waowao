@@ -37,10 +37,10 @@ export default async function handler(
   }
 
   try {
-    const { fileName, base64Audio, timestamp } = req.body;
+    const { fileName, base64Audio, timestamp, userName } = req.body;
 
-    if (!fileName || !base64Audio) {
-      return res.status(400).json({ error: 'fileName and base64Audio are required' });
+    if (!fileName || !base64Audio || !userName) {
+      return res.status(400).json({ error: 'fileName, base64Audio, and userName are required' });
     }
 
     if (!GITHUB_TOKEN) {
@@ -124,15 +124,16 @@ export default async function handler(
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          title: `🎤 新しいﾜｵ!音声がアップロードされました`,
+          title: `🎤 ${userName}さんのﾜｵ!がアップロードされました`,
           head: branchName,
           base: 'main',
-          body: `## 🎉 ﾜｵ!音声がアップロードされました！
+          body: `## 🎉 ${userName}さんの新しいﾜｵ!音声がアップロードされました！
 
 ### 🔊 プレビュー
 [こちらをクリックして試聴](${audioUrl})
 
 ### 📁 ファイル情報
+- **投稿者**: ${userName}さん
 - **ファイル名**: \`${fileName}\`
 - **アップロード日時**: ${new Date().toLocaleString('ja-JP')}
 - **形式**: WebM Audio
