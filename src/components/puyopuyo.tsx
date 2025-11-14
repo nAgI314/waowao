@@ -658,7 +658,7 @@ const createPullRequest = async (audioBlob: Blob) => {
                 value={userName}
                 onChange={(e) => setUserName(e.target.value)}
                 maxLength={20}
-                className="w-full px-4 py-2 border-2 border-blue-400 rounded-lg text-lg text-center focus:outline-none focus:border-blue-600"
+                className="w-full px-4 py-2 border-2 border-blue-400 rounded-lg text-lg text-center text-gray-800 focus:outline-none focus:border-blue-600"
               />
               {!isRecording && !recordedAudioUrl && (
                 <button
